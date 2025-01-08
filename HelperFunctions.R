@@ -23,12 +23,14 @@ CALC_METRICS <- function(dose_responses, dose_responses_grouped, graph = F){
   iter <- nrow(dose_responses_grouped)
   list.AUC_DSS <- list()
   list.believe <- list()
+  list.why.not.believe <- list()
   list.IC50 <- list()
   unlink("./IC50", recursive = T) ;dir.create("./IC50")
   
   for(it in 1:iter){
     df.DSS.ctx <- CALC_IC50_EC50_DSS(it, dose_responses_grouped, dose_responses, DSS_typ = '2', graph = graph)
     list.believe[[it]] <- data.frame(believe_DSS = df.DSS.ctx[[3]])
+    list.why.not.believe[[it]] <- data.frame(why_not_believe_DSS = df.DSS.ctx[[10]])
     list.AUC_DSS[[it]] <- data.frame(AUC = df.DSS.ctx[[1]]$AUC,DSS1 = df.DSS.ctx[[5]],
                                      DSS2 = df.DSS.ctx[[6]],DSS3 = df.DSS.ctx[[7]])
     list.IC50[[it]] <- data.frame(IC50 = df.DSS.ctx[[8]])
@@ -36,9 +38,10 @@ CALC_METRICS <- function(dose_responses, dose_responses_grouped, graph = F){
     svMisc::progress(it/iter*100)
   }
   df.believe <- bind_rows(list.believe)
+  df.why.not.believe <- bind_rows(list.why.not.believe)
   list.AUC_DSS <- bind_rows(list.AUC_DSS)
   df.IC50_metrics <- bind_rows(list.IC50)
-  df.metric <- cbind( dose_responses_grouped, list.AUC_DSS, df.IC50_metrics, df.believe)
+  df.metric <- cbind( dose_responses_grouped, list.AUC_DSS, df.IC50_metrics, df.believe, df.why.not.believe)
   message("Finished DSS computations in ", round(Sys.time() - start.time, 2), units(Sys.time() - start.time))
   return(df.metric)
   

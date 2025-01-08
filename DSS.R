@@ -87,7 +87,7 @@ CALC_IC50_EC50_DSS <- compiler::cmpfun(function(i, drug_wells_, xpr_tbl, DSS_typ
     if(all(inhibition <= 0)) inhibition <- rep(0, length(inhibition))
     if(any(duplicated(inhibition))) inhibition <- seq(from = 0, length.out = length(inhibition), by = 0.01) + inhibition;
     
-    viability = 100-inhibition; believe_ = T;
+    viability = 100-inhibition; believe_ = T; why_ = "";
     
     # extract concentrations, unique drug names and product ids for wells with drugs in current plate
     dose <- as.numeric(xpr_tbl$Concentration[idx_filt])
@@ -101,6 +101,7 @@ CALC_IC50_EC50_DSS <- compiler::cmpfun(function(i, drug_wells_, xpr_tbl, DSS_typ
     #print(paste0(product_id,",   ",drug_name));print(mat_tbl);
     
     
+
     if(DSS_typ == "AUC"){
       
       mat_tbl$indexx = 1:nrow(mat_tbl)
@@ -384,16 +385,16 @@ CALC_IC50_EC50_DSS <- compiler::cmpfun(function(i, drug_wells_, xpr_tbl, DSS_typ
       # browser()
       # check believe
       if(IC50_dataframe$DSS > 1){
-        if(IC50_dataframe$SE_of_estimate > 40) believe_ = F; # if SE > 40
+        if(IC50_dataframe$SE_of_estimate > 40) {believe_ = F; why_ = paste(why_, "IC50_SE>40")} # if SE > 40
         #if(IC50_dataframe[[paste0("D", length(mat_tbl$inhibition))]] - IC50_dataframe[[paste0("D", length(mat_tbl$inhibition)-1)]] < -25) believe_ = F; # if last is less effective than penultimate
-        if(sumIC50$residuals[[1]] > 20 && sumIC50$residuals[[2]] > 20) believe_ = F; # if residuals for first 2 points more than 10
-        if(max(sumIC50$residuals) > 30) believe_ = F; # if any of individual points deviates more than 30
+        if(sumIC50$residuals[[1]] > 20 && sumIC50$residuals[[2]] > 20) {believe_ = F; why_ = paste(why_, "first_2_points_residuals>20")} # if residuals for first 2 points more than 10
+        if(max(sumIC50$residuals) > 30) {believe_ = F; why_ = paste(why_, "any_residual>30")} # if any of individual points deviates more than 30
       }
       
       resid_ = as.numeric(sumIC50$residuals); resp_ = as.numeric(perInh); cond = 0;
-      if(sum(abs(resid_)>15)>1) {believe_ = !1; cond = 2};if(tail(resp_,2)[[1]]-tail(resp_,1) > 7 && tail(resp_,1)-tail(resp_,3)[[1]] > 7) {believe_ = !1; cond = 3}
-      if(any(abs(resid_)>10) && (ic50std_resid>10)) {believe_ = !1; cond = 5};if(ic50std_resid>100) {believe_ = !1; cond = 6}
-      if(sum(abs(resid_)>10)>2){believe_ = !1; cond = 8};if(sum(abs(resid_)>10)>1 && any(abs(resid_)>15)) {believe_ = !1; cond = 9};
+      if(sum(abs(resid_)>15)>1) {believe_ = F; why_ = paste(why_, "condition_2"); cond = 2};if(tail(resp_,2)[[1]]-tail(resp_,1) > 7 && tail(resp_,1)-tail(resp_,3)[[1]] > 7) {believe_ = F; why_ = paste(why_, "condition_3"); cond = 3}
+      if(any(abs(resid_)>10) && (ic50std_resid>10)) {believe_ = F; why_ = paste(why_, "condition_5"); cond = 5};if(ic50std_resid>100) {believe_ = F; why_ = paste(why_, "condition_6"); cond = 6}
+      if(sum(abs(resid_)>10)>2){believe_ = F; why_ = paste(why_, "res>10>condition_8"); cond = 8};if(sum(abs(resid_)>10)>1 && any(abs(resid_)>15)) {believe_ = F; why_ = paste(why_, "condition_9"); cond = 9};
       if(sum(resp_ < 2) >= (length(resp_)-1)) {believe_ = !0; cond = 1}
       #print(paste0(product_id,"   ",believe_,"   ",cond));
       Readout=ifelse(readoutCTX, "Toxicity", "Viability");
@@ -415,7 +416,8 @@ CALC_IC50_EC50_DSS <- compiler::cmpfun(function(i, drug_wells_, xpr_tbl, DSS_typ
            dss_score2,
            dss_score3,
            coef_ic50["IC50"],
-           coef_tec50["TC50"])
+           coef_tec50["TC50"],
+           why_)
     }
   }, error = function(e) {
     print(paste0("error in ", product_id, ", in ", xpr_tbl$screen_id[idx_filt][[1]]));
