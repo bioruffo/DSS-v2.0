@@ -394,7 +394,7 @@ CALC_IC50_EC50_DSS <- compiler::cmpfun(function(i, drug_wells_, xpr_tbl, DSS_typ
       resid_ = as.numeric(sumIC50$residuals); resp_ = as.numeric(perInh); cond = 0;
       if(sum(abs(resid_)>15)>1) {believe_ = F; why_ = paste(why_, "condition_2"); cond = 2};if(tail(resp_,2)[[1]]-tail(resp_,1) > 7 && tail(resp_,1)-tail(resp_,3)[[1]] > 7) {believe_ = F; why_ = paste(why_, "condition_3"); cond = 3}
       if(any(abs(resid_)>10) && (ic50std_resid>10)) {believe_ = F; why_ = paste(why_, "condition_5"); cond = 5};if(ic50std_resid>100) {believe_ = F; why_ = paste(why_, "condition_6"); cond = 6}
-      if(sum(abs(resid_)>10)>2){believe_ = F; why_ = paste(why_, "res>10>condition_8"); cond = 8};if(sum(abs(resid_)>10)>1 && any(abs(resid_)>15)) {believe_ = F; why_ = paste(why_, "condition_9"); cond = 9};
+      if(sum(abs(resid_)>10)>2){believe_ = F; why_ = paste(why_, "condition_8"); cond = 8};if(sum(abs(resid_)>10)>1 && any(abs(resid_)>15)) {believe_ = F; why_ = paste(why_, "condition_9"); cond = 9};
       if(sum(resp_ < 2) >= (length(resp_)-1)) {believe_ = !0; cond = 1}
       #print(paste0(product_id,"   ",believe_,"   ",cond));
       Readout=ifelse(readoutCTX, "Toxicity", "Viability");
